@@ -14,7 +14,7 @@ class InsertDriver:
             lng = '104.'+str(add)
             self.driver(lat,lng, random.randrange(0,65))
         
-        # print(self.array_driver)
+        print(self.array_driver)
         return self.array_driver
         # self.array_driver=','.join(self.array_driver)
         # print("Driver",self.array_driver)
