@@ -1,25 +1,32 @@
+import queue
+from time import gmtime, strftime
 from fastapi.responses import JSONResponse
 import numpy as np
 from shapely.geometry.polygon import Polygon
 from shapely.geometry import Point
 from .create_plan import Plans  
+from config.settings import Settings
 from pydantic import BaseModel
+import math
+import random
 
 class Coordinates(BaseModel):
     lat: float
     lng: float
 
+q = queue.Queue()
+settings = Settings()
 class ScanDriver:
     current_speed = 60
     coordinates = None
     dist = 0  # distance route
     o_dura = 0  # old duration
-
-    def __init__(self):
-        self.q = queue.Queue()
+    
+    # def __init__(self):
+    #     self.q = queue.Queue()
 
     def scan_driver(self,coordinates,i_driver):
-        print("Start scan:",strftime("%Hh%Mmn:%Ssec", gmtime()))
+        # print("Start scan:",strftime("%Hh%Mmn:%Ssec", gmtime()))
         multi = self.route_and_block(coordinates)
         co_map = multi[0]  # route [lat,lng]
         block_data = multi[1]  # block
@@ -91,7 +98,8 @@ class ScanDriver:
         block_data_scan = ','.join(block_data_scan)
         block_data_scan = eval('['+block_data_scan+']')
         du_dis = self.update_duration(block_data_scan) # to get duration update
-        print("End scan:",strftime("%Hh%Mmn:%Ssec", gmtime()))
+        # print("du_dis: ", du_dis)
+        # print("End scan:",strftime("%Hh%Mmn:%Ssec", gmtime()))
         self.scan_driver_api = eval('{'+'"point1":{},"point2":{},"route":{},"duration":{},"distance":{},"blocks_scan":[{}]'.format(co_map['point1'],co_map['point2'],co_map['route'],du_dis,self.dist,block_data_scan)+'}')
         return du_dis, block_data_scan # duration updated, {"block"},{"block"},...
     # final update time
