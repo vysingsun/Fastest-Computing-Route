@@ -1,10 +1,12 @@
 from pydantic import BaseModel
+from config.settings import Settings
 import requests
 
 class RouteTest(BaseModel):
     start: str
     end: str
 
+settings = Settings()
 class Variable:
     CONDITION = None
     ROUTE = None
@@ -59,13 +61,13 @@ class Variable:
         start_point = "x%3A{}%20y%3A{}".format(s_lng, s_lat)
         end_point = "x%3A{}%20y%3A{}".format(e_lng, e_lat)
         URLROUTE = f"https://www.waze.com/row-RoutingManager/routingRequest?at=0&clientVersion={settings.VERSION_WAZE}&from={start_point}&nPaths=1&options=AVOID_TRAILS%3At%2CALLOW_UTURNS%3At&returnGeometries=true&returnInstructions=true&returnJSON=true&timeout=60000&to={end_point}"
-        URLTRAFFIC = f"https://www.waze.com/row-rtserver/web/TGeoRSS?bottom={s_lng}&left={s_lat}&ma=200&mj=100&mu=20&right={e_lng}&top={e_lat}types=alerts%2Ctraffic%2Cusers"
-        HEADER = {
+        self.URLTRAFFIC = f"https://www.waze.com/row-rtserver/web/TGeoRSS?bottom={s_lng}&left={s_lat}&ma=200&mj=100&mu=20&right={e_lng}&top={e_lat}types=alerts%2Ctraffic%2Cusers"
+        self.HEADER = {
             "Content-Type": "application/json",
             "User-Agent": "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/536.5 (KHTML, like Gecko) Chrome/19.0.1084.52 Safari/536.5",
             "referer": f"https://www.waze.com/livemap/directions?q=66%20Acacia%20Avenue&navigate=yes&latlng={s_lng}%2C-{s_lat}",
         }
-        return requests.get(URLROUTE, headers=HEADER).json()
+        return requests.get(URLROUTE, headers=self.HEADER).json()
 
     def getTraffic(self):
         return requests.get(self.URLTRAFFIC, headers=self.HEADER).json()

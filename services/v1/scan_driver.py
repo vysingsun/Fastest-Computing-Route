@@ -6,7 +6,7 @@ from shapely.geometry.polygon import Polygon
 from shapely.geometry import Point
 from .create_plan import Plans  
 from config.settings import Settings
-from pydantic import BaseModel
+from pydantic import BaseModel # type: ignore
 import math
 import random
 
