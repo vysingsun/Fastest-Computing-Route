@@ -2,6 +2,7 @@ from fastapi import APIRouter, HTTPException
 from .scan_driver import ScanDriver
 from .insert_driver import InsertDriver
 from models.models import Variable
+import threading
 import requests
 
 URLOSRM = "https://routing.openstreetmap.de/routed-car/route/v1/driving/{lng_start_point},{lat_start_point};{lng_end_point},{lat_end_point}?overview=full&geometries=geojson&steps=true&generate_hints=false"
@@ -22,6 +23,17 @@ class RequestRoute:
     models = Variable()
     conditions = models.CONDITION
     full_route = models.ROUTE
+    
+    routes = []
+    start_route = 0
+    
+    points = [
+        (11.584637323468067, 104.90419534099364),  # start_point
+        (11.567172, 104.900340),  # nd_point
+        (11.583854, 104.909404), # rd_point
+        (11.553859, 104.895052),   # th_point
+        (11.579015, 104.917060)
+    ]
 
     def __init__(self, s_lat, s_lng, e_lat, e_lng):
         self.models.setStartLatLng(s_lat, s_lng)
@@ -156,4 +168,84 @@ class RequestRoute:
             options.append({"point": None, "distance": distance, "direction": direction, "streetName": streetName})
         self.options = options
         return self.options
+    
+    def serve_of_multiple_points(self):
+        print("Use test!!")
+        for name in self.conditions:     
+            while name == "route":
+                if self.conditions[name] == "osrm":
+                    route = self.dynamic_route_of_multiple_points("osrm")
+                break
+            while name == "scan":
+                if self.conditions[name] == True:
+                    self.scan_route()
+                    self.full_route["geometries"]["blocks_scan"] = self.block_scan_data
+                else:
+                    self.full_route["geometries"]["blocks_scan"] = []
+                break
+        re_route = [[i[1],i[0]] for i in route]
+        self.full_route["geometries"]["route"] = re_route
+        return self.full_route
+    
+    def dynamic_route_of_multiple_points(self, types=None):
+        # print("CALL multi")
+        if types is None or types == "osrm" or types != "graph":
+            # Fixed starting point
+            start_point = self.points[0]
+            other_points = self.points[1:]
+            
+            return self.get_short_dis_and_route(start_point, other_points)
+        
+    def get_short_dis_and_route(self, start, points):
+
+        points = [i for i in points if i != start]
+        short_point = []
+        shortest_distance = float('inf')
+
+        self.conditions["start_point"] = {
+            "lat": start[0],
+            "lng": start[1],
+        }
+        
+        #Add threading
+        
+        threads = []
+        results = []
+        results_lock = threading.Lock()
+        
+        def worker(data, index):
+            self.conditions["end_point"] = {
+                "lat": data[0],
+                "lng": data[1],
+            }
+            self.dynamic_route(types='osrm')
+            with results_lock:
+                results.append((self.distance, data, index, self.coordinates))
+        for i, data in enumerate(points):
+            thread = threading.Thread(target=worker, args=(data, i))
+            threads.append(thread)
+            thread.start()
+
+        for thread in threads:
+            thread.join()
+
+        # Test Sort results by distance
+        results.sort(key=lambda x: x[0])
+        
+        for distance, data, index, coords in results:
+            print("==>: ",distance, index)
+            if distance < shortest_distance:
+                shortest_distance = distance
+                short_point = data
+                
+                self.conditions["start_point"] = {
+                    "lat": data[0],
+                    "lng": data[1],
+                }
+                if self.routes != self.coordinates:
+                    self.routes = self.routes+coords
+      
+        if len(points) > 0 :
+            self.get_short_dis_and_route(short_point, points)
+        return self.routes
 

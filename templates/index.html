@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fastest Computing Route</title>
+</head>
+<body>
+    <h3>Fastest Computing Route: {{ distance }}</h3>
+    {{ map }}
+    <script>
+        var startpoint = {lat:{{lat_s}},lng:{{lng_s}}}
+        var endpoint = {lat:{{lat_e}},lng:{{lng_e}}}
+        var center = {lat:(startpoint.lat+endpoint.lat)/2,lng:(startpoint.lng+endpoint.lng)/2}
+        var map = L.map("map",
+        {
+            center: startpoint,
+            crs: L.CRS.EPSG3857,
+            zoom: 14,
+            zoomControl: true,
+            preferCanvas: false,
+        }
+        );
+        L.polyline([{{map}}], {color: '#0000FF',weight:6,opacity:2}).addTo(map);
+
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+        {
+            "attribution": "Data by \u0026copy; \u003ca href=\"http://openstreetmap.org\"\u003eOpenStreetMap\u003c/a\u003e, under \u003ca href=\"http://www.openstreetmap.org/copyright\"\u003eODbL\u003c/a\u003e.",
+            "detectRetina": false,
+            "maxNativeZoom": 18,
+            "maxZoom": 25,
+            "minZoom": 0,
+            "noWrap": false,
+            "opacity": 1,
+            "subdomains": "abc",
+            "tms": false
+        }
+        ).addTo(map);
+
+        var icon_end = L.icon({
+            iconUrl: 'static/dist/images/marker-icon_2.png',
+            iconSize: [27, 47],
+            iconAnchor: [15, 47],
+        });
+        L.marker(startpoint,{icon:icon_end}).addTo(map);
+        L.marker(endpoint,{icon: new L.Icon.Default(), draggable:true,title:'You will arrived soon'}).addTo(map).bindPopup('It will alert when you arrived.<br> Let`s Go!!!');
+    </script>
+</body>
+</html>
