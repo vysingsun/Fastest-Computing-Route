@@ -6,6 +6,7 @@ from services.service_api import get_route_osrm_grab, get_route_osrm_grab2, get_
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 import httpx
+import requests
 
 routeMap = APIRouter()
 templates = Jinja2Templates(directory="templates")
@@ -25,9 +26,13 @@ async def index(request: Request):
         "scan": True,
         "traffic": True,
     }
-    async with httpx.AsyncClient() as client:
-        response = await client.post("http://localhost:8000/api/v1/route", json=data)
-        response_data = response.json()
+    # async with httpx.AsyncClient() as client:
+    #     response = await client.post("http://localhost:8000/api/v1/route", json=data)
+    #     response_data = response.json()
+        
+    
+    response = requests.post("https://fastest-computing-route-dev.onrender.com/api/v1/route", json=data)
+    response_data = response.json()
         
     gcoor = []
     for i in range(len(response_data['geometries']['route'])):
@@ -62,7 +67,7 @@ async def index(request: Request):
         "traffic": True,
     }
     async with httpx.AsyncClient() as client:
-        response = await client.post("http://localhost:8000/api/v1/route/multiplepoints", json=data)
+        response = client.post("https://fastest-computing-route-dev.onrender.com/api/v1/route/multiplepoints", json=data)
         response_data = response.json()
         
     gcoor = []
