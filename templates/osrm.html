@@ -1,24 +1,19 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fastest Computing Route</title>
-    <script src="{{ url_for('static', path='/dist/leaflet.js') }}"></script>
-    <link href="{{ url_for('static', path='/dist/leaflet.css') }}" rel="stylesheet"/>
-</head>
-<body>
-    <h3>Fastest Computing Route</h3>
-    <div>
-        <b>Distance: {{distance}}</b>km <br/>
-        <b>old_time: {{old_time}}</b><br/>
-        <b>Using Model: << {{model}} >></b><br/>
-    </div>
+{% extends 'core.html' %}
+{% block core_body%}
     <div class="folium-map" id="map" style="position:absolute;width: 100%;height: 100%;left: 0px"></div>
     <script>
-        var startpoint = {lat:{{lat_s}},lng:{{lng_s}}}
-        var endpoint = {lat:{{lat_e}},lng:{{lng_e}}}
-        var center = {lat:(startpoint.lat+endpoint.lat)/2,lng:(startpoint.lng+endpoint.lng)/2}
+        var startpoint = {
+            lat:{{lat_s}},
+            lng:{{lng_s}}
+        }
+        var endpoint = {
+            lat:{{lat_e}},
+            lng:{{lng_e}}
+        }
+        var center = {
+            lat:(startpoint.lat+endpoint.lat)/2,
+            lng:(startpoint.lng+endpoint.lng)/2
+        }
         var map = L.map("map",
         {
             center: startpoint,
@@ -53,5 +48,4 @@
         L.marker(startpoint,{icon:icon_end}).addTo(map);
         L.marker(endpoint,{icon: new L.Icon.Default(), draggable:true,title:'You will arrived soon'}).addTo(map).bindPopup('It will alert when you arrived.<br> Let`s Go!!!');
     </script>
-</body>
-</html>
+{% endblock core_body%}

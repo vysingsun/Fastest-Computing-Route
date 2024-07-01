@@ -1,0 +1,6 @@
+fastapi 
+numpy 
+shapely 
+pydantic 
+requests 
+pydantic_settings

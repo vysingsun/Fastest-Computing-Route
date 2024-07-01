@@ -112,7 +112,7 @@ async def index(request: Request):
         'lng_e': data['end_point']['lng'],
         'data_delay': response_data['geometries']['blocks_scan'],
     }
-    return templates.TemplateResponse(name="index.html", request=request, context=context)
+    return templates.TemplateResponse(name="osrm.html", request=request, context=context)
 
 @routeMap.get('/waze')
 async def index(request: Request):
@@ -142,7 +142,7 @@ async def index(request: Request):
         'lng_e': data['end_point']['lng'],
         'data_delay': response_data['geometries']['blocks_scan'],
     }
-    return templates.TemplateResponse(name="index.html", request=request, context=context)
+    return templates.TemplateResponse(name="osrm.html", request=request, context=context)
 
 @routeMap.get('/multiple')
 async def index(request: Request):
@@ -172,7 +172,7 @@ async def index(request: Request):
         'lng_e': data['end_point']['lng'],
         # 'data_delay': response_data['geometries']['blocks_scan'],
     }
-    return templates.TemplateResponse(name="index.html", request=request, context=context)
+    return templates.TemplateResponse(name="osrm.html", request=request, context=context)
 
 
 @routeMap.post("/api/v1/route")
