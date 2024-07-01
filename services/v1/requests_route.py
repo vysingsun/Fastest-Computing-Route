@@ -1,3 +1,4 @@
+from fastapi import APIRouter, HTTPException
 from .scan_driver import ScanDriver
 from .insert_driver import InsertDriver
 from models.models import Variable
