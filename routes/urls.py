@@ -104,7 +104,7 @@ async def index(request: Request):
         "traffic": True,
     }
     async with httpx.AsyncClient() as client:
-        response = await client.post("http://localhost:8000/api/v1/route", json=data)
+        response = client.post("https://fastest-computing-route-dev.onrender.com/api/v1/route", json=data)
         response_data = response.json()
     context = {
         'model': "Car",
@@ -134,7 +134,7 @@ async def index(request: Request):
         "traffic": True,
     }
     async with httpx.AsyncClient() as client:
-        response = await client.post("http://localhost:8000/api/v2/route/waze", json=data)
+        response = client.post("https://fastest-computing-route-dev.onrender.com/api/v2/route/waze", json=data)
         response_data = response.json()
     context = {
         'model': "Car",
@@ -164,7 +164,7 @@ async def index(request: Request):
         "traffic": True,
     }
     async with httpx.AsyncClient() as client:
-        response = await client.post("http://localhost:8000/api/v1/route/multiplepoints", json=data)
+        response = client.post("https://fastest-computing-route-dev.onrender.com/api/v1/route/multiplepoints", json=data)
         response_data = response.json()
     context = {
         'model': "Car",
