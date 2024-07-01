@@ -1,4 +1,3 @@
-from fastapi import APIRouter, HTTPException
 from .scan_driver import ScanDriver
 from .insert_driver import InsertDriver
 from models.models import Variable
@@ -60,7 +59,7 @@ class RequestRoute:
         self.full_route["geometries"]["options"] = self.options  
         self.full_route["start_point"] = [self.route[0][0], self.route[0][1]]
         self.full_route["end_point"] = [self.route[-1][0], self.route[-1][1]]
-        # print("Full_route: ", self.full_route)
+
         return self.full_route
 
     def condition(self, **kwargs):
@@ -96,8 +95,6 @@ class RequestRoute:
             self.steps = graph_bike['paths']
             self.coordinates = graph_bike['paths'][0]['points']['coordinates']
             self.options_graph()
-
-        # print(['dynamic_route',self.conditions,osrm_bike])
         
         if not self.coordinates is None:
             return self.get_single_map()
@@ -170,7 +167,6 @@ class RequestRoute:
         return self.options
     
     def serve_of_multiple_points(self):
-        print("Use test!!")
         for name in self.conditions:     
             while name == "route":
                 if self.conditions[name] == "osrm":
@@ -188,7 +184,6 @@ class RequestRoute:
         return self.full_route
     
     def dynamic_route_of_multiple_points(self, types=None):
-        # print("CALL multi")
         if types is None or types == "osrm" or types != "graph":
             # Fixed starting point
             start_point = self.points[0]
@@ -233,7 +228,6 @@ class RequestRoute:
         results.sort(key=lambda x: x[0])
         
         for distance, data, index, coords in results:
-            print("==>: ",distance, index)
             if distance < shortest_distance:
                 shortest_distance = distance
                 short_point = data

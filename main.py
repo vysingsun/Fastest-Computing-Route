@@ -1,7 +1,5 @@
-from typing import Union
 from fastapi import FastAPI # type: ignore
 import uvicorn
-import os
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from routes.urls import routeMap
