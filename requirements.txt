@@ -4,3 +4,4 @@ shapely
 pydantic 
 requests 
 pydantic_settings
+httpx
