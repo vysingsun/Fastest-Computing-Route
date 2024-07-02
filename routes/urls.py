@@ -24,7 +24,7 @@ async def index(request: Request):
         "scan": True,
         "traffic": True,
     }
-    response = requests.post("https://fastest-computing-route-1.onrender.com/api/v1/route", json=data)
+    response = requests.post("https://fastest-computing-route-dev.onrender.com/api/v1/route", json=data)
     response_data = response.json()
     gcoor = []
     for i in range(len(response_data['geometries']['route'])):
@@ -58,7 +58,7 @@ async def index(request: Request):
         "scan": True,
         "traffic": True,
     }
-    response = requests.post("https://fastest-computing-route-1.onrender.com/api/v1/route/multiplepoints", json=data)
+    response = requests.post("https://fastest-computing-route-dev.onrender.com/api/v1/route/multiplepoints", json=data)
     response_data = response.json()
         
     gcoor = []
@@ -94,7 +94,7 @@ async def index(request: Request):
         "scan": True,
         "traffic": True,
     }
-    response = requests.post("https://fastest-computing-route-1.onrender.com/api/v1/route", json=data)
+    response = requests.post("https://fastest-computing-route-dev.onrender.com/api/v1/route", json=data)
     response_data = response.json()
     context = {
         'model': "Car",
@@ -123,7 +123,7 @@ async def index(request: Request):
         "scan": True,
         "traffic": True,
     }
-    response = requests.post("https://fastest-computing-route-1.onrender.com/api/v2/route/waze", json=data)
+    response = requests.post("https://fastest-computing-route-dev.onrender.com/api/v2/route/waze", json=data)
     response_data = response.json()
     context = {
         'model': "Car",
@@ -152,7 +152,7 @@ async def index(request: Request):
         "scan": True,
         "traffic": True,
     }
-    response = requests.post("https://fastest-computing-route-1.onrender.com/api/v1/route/multiplepoints", json=data)
+    response = requests.post("https://fastest-computing-route-dev.onrender.com/api/v1/route/multiplepoints", json=data)
     response_data = response.json()
     context = {
         'model': "Car",
