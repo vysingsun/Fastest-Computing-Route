@@ -26,13 +26,9 @@ async def index(request: Request):
         "scan": True,
         "traffic": True,
     }
-    # async with httpx.AsyncClient() as client:
-    #     response = await client.post("http://localhost:8000/api/v1/route", json=data)
-    #     response_data = response.json()
-        
-    
-    response = requests.post("https://fastest-computing-route-dev.onrender.com/api/v1/route", json=data)
-    response_data = response.json()
+    async with httpx.AsyncClient() as client:
+        response = await client.post("https://fastest-computing-route-dev.onrender.com/api/v1/route", json=data)
+        response_data = response.json()
         
     gcoor = []
     for i in range(len(response_data['geometries']['route'])):
@@ -67,7 +63,7 @@ async def index(request: Request):
         "traffic": True,
     }
     async with httpx.AsyncClient() as client:
-        response = client.post("https://fastest-computing-route-dev.onrender.com/api/v1/route/multiplepoints", json=data)
+        response = await client.post("https://fastest-computing-route-dev.onrender.com/api/v1/route/multiplepoints", json=data)
         response_data = response.json()
         
     gcoor = []
@@ -104,7 +100,7 @@ async def index(request: Request):
         "traffic": True,
     }
     async with httpx.AsyncClient() as client:
-        response = client.post("https://fastest-computing-route-dev.onrender.com/api/v1/route", json=data)
+        response = await client.post("https://fastest-computing-route-dev.onrender.com/api/v1/route", json=data)
         response_data = response.json()
     context = {
         'model': "Car",
@@ -134,7 +130,7 @@ async def index(request: Request):
         "traffic": True,
     }
     async with httpx.AsyncClient() as client:
-        response = client.post("https://fastest-computing-route-dev.onrender.com/api/v2/route/waze", json=data)
+        response = await client.post("https://fastest-computing-route-dev.onrender.com/api/v2/route/waze", json=data)
         response_data = response.json()
     context = {
         'model': "Car",
@@ -164,7 +160,7 @@ async def index(request: Request):
         "traffic": True,
     }
     async with httpx.AsyncClient() as client:
-        response = client.post("https://fastest-computing-route-dev.onrender.com/api/v1/route/multiplepoints", json=data)
+        response = await client.post("https://fastest-computing-route-dev.onrender.com/api/v1/route/multiplepoints", json=data)
         response_data = response.json()
     context = {
         'model': "Car",
