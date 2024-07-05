@@ -4,7 +4,7 @@ from models.models import Variable
 from services.v1.requests_route import RequestRoute
 from services.service_api import get_route_osrm_grab, get_route_waze, get_route_multiple_points_osrm_grab
 from fastapi.templating import Jinja2Templates
-import requests
+import httpx
 
 routeMap = APIRouter()
 templates = Jinja2Templates(directory="templates")
@@ -24,8 +24,10 @@ async def index(request: Request):
         "scan": True,
         "traffic": True,
     }
-    response = requests.post("https://fastest-computing-route-dev.onrender.com/api/v1/route", json=data)
-    response_data = response.json()
+    print(data)
+    async with httpx.AsyncClient() as client:
+        response = await client.post("http://localhost:8000/api/v1/route", json=data)
+        response_data = response.json()
     gcoor = []
     for i in range(len(response_data['geometries']['route'])):
         gcoor.append('{lat:'+str(response_data['geometries']['route'][i][0])+',lng:'+str(response_data['geometries']['route'][i][1])+'}')
@@ -58,8 +60,9 @@ async def index(request: Request):
         "scan": True,
         "traffic": True,
     }
-    response = requests.post("https://fastest-computing-route-dev.onrender.com/api/v1/route/multiplepoints", json=data)
-    response_data = response.json()
+    async with httpx.AsyncClient() as client:
+        response = await client.post("http://localhost:8000/api/v1/route/multiplepoints", json=data)
+        response_data = response.json()
         
     gcoor = []
     for i in range(len(response_data['geometries']['route'])):
@@ -79,7 +82,7 @@ async def index(request: Request):
     }
     return templates.TemplateResponse(name="googleMap.html", request=request, context=context)
 
-# Open Street Map
+# # Open Street Map
 @routeMap.get('/open_street_map')
 async def index(request: Request):
     data = {
@@ -94,8 +97,10 @@ async def index(request: Request):
         "scan": True,
         "traffic": True,
     }
-    response = requests.post("https://fastest-computing-route-dev.onrender.com/api/v1/route", json=data)
-    response_data = response.json()
+    print(data)
+    async with httpx.AsyncClient() as client:
+        response = await client.post("http://localhost:8000/api/v1/route", json=data)
+        response_data = response.json()
     context = {
         'model': "Car",
         'distance': response_data['geometries']['distance'] / 1000,
@@ -123,8 +128,9 @@ async def index(request: Request):
         "scan": True,
         "traffic": True,
     }
-    response = requests.post("https://fastest-computing-route-dev.onrender.com/api/v2/route/waze", json=data)
-    response_data = response.json()
+    async with httpx.AsyncClient() as client:
+        response = await client.post("https://fastest-computing-route.onrender.com/api/v2/route/waze", json=data)
+        response_data = response.json()
     context = {
         'model': "Car",
         'distance': response_data['geometries']['distance'] / 1000,
@@ -152,8 +158,9 @@ async def index(request: Request):
         "scan": True,
         "traffic": True,
     }
-    response = requests.post("https://fastest-computing-route-dev.onrender.com/api/v1/route/multiplepoints", json=data)
-    response_data = response.json()
+    async with httpx.AsyncClient() as client:
+        response = await client.post("http://localhost:8000/api/v1/route/multiplepoints", json=data)
+        response_data = response.json()
     context = {
         'model': "Car",
         # 'distance': response_data['geometries']['distance'] / 1000,
@@ -171,6 +178,7 @@ async def index(request: Request):
 @routeMap.post("/api/v1/route")
 async def open_street_map(request: Request):
     data = await request.json()
+    print(data)
     return get_route_osrm_grab(data)
 
 @routeMap.post("/api/v2/route/waze")
