@@ -2,6 +2,14 @@
 {% block core_body%}
     <div class="folium-map" id="map" style="position:absolute;width: 100%;height: 100%;left: 0px"></div>
     <script>
+        var points = [
+            [11.584637323468067, 104.90419534099364],
+            [11.567172, 104.900340],
+            [11.583854, 104.909404],
+            [11.553859, 104.895052],
+            [11.579015, 104.917060]
+        ]
+
         var startpoint = {
             lat:{{lat_s}},
             lng:{{lng_s}}
@@ -25,6 +33,9 @@
         );
         L.polyline([{{map}}], {color: '#0000FF',weight:6,opacity:2}).addTo(map);
 
+        points.forEach(function(point) {
+            L.marker([point[0], point[1]], { icon: new L.Icon.Default() }).addTo(map);
+        });
 
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
         {
@@ -45,8 +56,8 @@
             iconSize: [27, 47],
             iconAnchor: [15, 47],
         });
-        L.marker(startpoint,{icon:icon_end}).addTo(map);
-        L.marker(endpoint,{icon: new L.Icon.Default(), draggable:true,title:'You will arrived soon'}).addTo(map).bindPopup('It will alert when you arrived.<br> Let`s Go!!!');
+        // L.marker(startpoint,{icon:icon_end}).addTo(map);
+        // L.marker(endpoint,{icon: new L.Icon.Default(), draggable:true,title:'You will arrived soon'}).addTo(map).bindPopup('It will alert when you arrived.<br> Let`s Go!!!');
     </script>
     {% for index in data_delay %}
         {% if not index.route_color == "#0000FF"%}
