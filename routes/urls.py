@@ -32,6 +32,13 @@ async def index(request: Request):
     for i in range(len(response_data['geometries']['route'])):
         gcoor.append('{lat:'+str(response_data['geometries']['route'][i][0])+',lng:'+str(response_data['geometries']['route'][i][1])+'}')
     gcoor=','.join(gcoor)
+    
+    #mapping Data for block traffic
+    bcoor = []
+    for block_scan in response_data['geometries']['blocks_scan']:
+        for coordinate in block_scan['block']:
+            bcoor.append(f'{{lat:{coordinate[0]},lng:{coordinate[1]}}}')
+    bcoor = ','.join(bcoor)
 
     context = {
         'model': "Car",
@@ -42,7 +49,7 @@ async def index(request: Request):
         'lng_s': data['start_point']['lng'],
         'lat_e': data['end_point']['lat'],
         'lng_e': data['end_point']['lng'],
-        'data_delay': response_data['geometries']['blocks_scan'],
+        'delay_map': bcoor,
     }
     return templates.TemplateResponse(name="googleMap.html", request=request, context=context)
 
@@ -68,6 +75,13 @@ async def index(request: Request):
     for i in range(len(response_data['geometries']['route'])):
         gcoor.append('{lat:'+str(response_data['geometries']['route'][i][0])+',lng:'+str(response_data['geometries']['route'][i][1])+'}')
     gcoor=','.join(gcoor)
+    
+    #mapping Data for block traffic
+    bcoor = []
+    for block_scan in response_data['geometries']['blocks_scan']:
+        for coordinate in block_scan['block']:
+            bcoor.append(f'{{lat:{coordinate[0]},lng:{coordinate[1]}}}')
+    bcoor = ','.join(bcoor)
 
     context = {
         'model': "Car",
@@ -78,7 +92,7 @@ async def index(request: Request):
         'lng_s': data['start_point']['lng'],
         'lat_e': data['end_point']['lat'],
         'lng_e': data['end_point']['lng'],
-        'data_delay': response_data['geometries']['blocks_scan'],
+        'delay_map': bcoor,
     }
     return templates.TemplateResponse(name="googleMap.html", request=request, context=context)
 
@@ -129,7 +143,7 @@ async def index(request: Request):
         "traffic": True,
     }
     async with httpx.AsyncClient() as client:
-        response = await client.post("https://fastest-computing-route.onrender.com/api/v2/route/waze", json=data)
+        response = await client.post("http://localhost:8000/api/v2/route/waze", json=data)
         response_data = response.json()
     context = {
         'model': "Car",
@@ -161,6 +175,8 @@ async def index(request: Request):
     async with httpx.AsyncClient() as client:
         response = await client.post("http://localhost:8000/api/v1/route/multiplepoints", json=data)
         response_data = response.json()
+        
+    print('Traffic',response_data['geometries']['blocks_scan'])
     context = {
         'model': "Car",
         # 'distance': response_data['geometries']['distance'] / 1000,
@@ -170,7 +186,7 @@ async def index(request: Request):
         'lng_s': data['start_point']['lng'],
         'lat_e': data['end_point']['lat'],
         'lng_e': data['end_point']['lng'],
-        # 'data_delay': response_data['geometries']['blocks_scan'],
+        'data_delay': response_data['geometries']['blocks_scan'],
     }
     return templates.TemplateResponse(name="osrm.html", request=request, context=context)
 
