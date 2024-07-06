@@ -1,0 +1,58 @@
+{% extends 'core.html' %}
+{% block core_body%}
+    <div id="map" style="position:absolute;width: 100%;height: 100%;left: 0px"></div>
+    <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDD9JHRxaxmPhScfgIF4h89KRshJAF315E&callback=initMap"></script>
+    <script>
+        function initMap() {
+            var points = {{points}}
+
+            var startpoint = {
+                lat: points[0][0],
+                lng: points[0][1]
+            };
+            var endpoint = {
+                lat: points[points.length - 1][0],
+                lng: points[points.length - 1][1]
+            };
+
+            var center = {
+                lat:(startpoint.lat+endpoint.lat)/2,
+                lng:(startpoint.lng+endpoint.lng)/2
+            }
+
+            var map = new google.maps.Map(document.getElementById('map'), {
+                zoom: 14,
+                center: center,
+                mapTypeId: 'terrain',
+            });
+            // Add markers for each point
+            points.forEach((point, index) => {
+                new google.maps.Marker({
+                    position: { lat: point[0], lng: point[1] },
+                    map: map,
+                    title: `Point ${index + 1}`
+                });
+            });
+
+            var flightPlanCoordinates = [{{ map }}];
+            var flightPath = new google.maps.Polyline({
+                path: flightPlanCoordinates,
+                geodesic: true,
+                strokeColor: '#0066ff',
+                strokeOpacity: 1.0,
+                strokeWeight: 3.5
+            });
+            flightPath.setMap(map);
+
+            var delay = [{{delay_map}}];
+            var delayPath = new google.maps.Polyline({
+                path: delay,
+                geodesic: true,
+                strokeColor: '#FFFF00',
+                strokeOpacity: 1.0,
+                strokeWeight: 3.5
+            });
+            delayPath.setMap(map);
+        }
+    </script>
+{% endblock core_body%}

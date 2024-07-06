@@ -40,8 +40,11 @@ class RequestRoute:
         self.models.setEndLatLng(e_lat, e_lng)
 
     def serve(self):
+        print("IN Serve",self.conditions)
+        print("MY points",self.conditions["points"])
         for name in self.conditions:
             if name == "route":
+                print(self.conditions[name])
                 if self.conditions[name] == "osrm":
                     self.dynamic_route("osrm")
                 else:
@@ -168,27 +171,32 @@ class RequestRoute:
         return self.options
     
     def serve_of_multiple_points(self):
-        for name in self.conditions:     
-            while name == "route":
+        route = None      
+        for name in self.conditions:
+            if name == "route":
                 if self.conditions[name] == "osrm":
                     route = self.dynamic_route_of_multiple_points("osrm")
                 break
-            while name == "scan":
-                if self.conditions[name] == True:
+            
+        if route is not None:
+            re_route = [[i[1], i[0]] for i in route]
+            self.full_route["geometries"]["route"] = re_route
+
+        for name in self.conditions:
+            if name == "scan":
+                if self.conditions[name]:
                     self.scan_route()
                     self.full_route["geometries"]["blocks_scan"] = self.block_scan_data
                 else:
                     self.full_route["geometries"]["blocks_scan"] = []
-                break
-        re_route = [[i[1],i[0]] for i in route]
-        self.full_route["geometries"]["route"] = re_route
+
         return self.full_route
     
     def dynamic_route_of_multiple_points(self, types=None):
         if types is None or types == "osrm" or types != "graph":
             # Fixed starting point
-            start_point = self.points[0]
-            other_points = self.points[1:]
+            start_point = self.conditions["points"][0]
+            other_points = self.conditions["points"][1:]
             
             return self.get_short_dis_and_route(start_point, other_points)
         

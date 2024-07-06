@@ -32,7 +32,8 @@ class Variable:
             "route": "osrm",
             "weather": "normal",
             "scan": "false",
-            "traffic": "false"
+            "traffic": "false",
+            "points": []
         }
 
         self.ROUTE = {

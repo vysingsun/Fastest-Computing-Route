@@ -63,17 +63,24 @@ def get_route_osrm_grab2(data):
 def get_route_multiple_points_osrm_grab(data):
     models_var = Variable()
     condition = models_var.CONDITION
+    
+    # Ensure that 'points' is provided and has at least two points
+    if 'points' not in data or len(data['points']) < 2:
+        return JSONResponse(content={"error": "At least two points are required"})
+    
+    start_point = data['points'][0]
+    end_point = data['points'][-1]
+    condition['points'] = data['points']
+    
     for name in condition:
-        if name == "end_point":
-            if not data.get(name):
-                return JSONResponse(content=models_var.ROUTE429)
-            condition[name] = data.get(name)
-        elif data.get(name) is not None:
+        if data.get(name) is not None:
             condition[name] = data.get(name)
 
-    do = RequestRoute(str(condition['start_point']['lat']),str(condition['start_point']['lng']),str(condition['end_point']['lat']),str(condition['end_point']['lng']))
-    do.condition(route=condition['route'])# osrm(default)
-    do.condition(scan=condition['scan'])# true , false(default)"
-    do.condition(weather=condition['weather'])# true , false(default)
+    do = RequestRoute(str(start_point[0]), str(start_point[1]), str(end_point[0]), str(end_point[1]))
+    do.condition(route=condition['route'])  # osrm(default)
+    do.condition(scan=condition['scan'])  # true, false(default)
+    do.condition(weather=condition['weather'])  # true, false(default)
+    do.condition(points=condition['points'])
+    
     return JSONResponse(do.serve_of_multiple_points())
 
