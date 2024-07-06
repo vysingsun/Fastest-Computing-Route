@@ -48,4 +48,26 @@
         L.marker(startpoint,{icon:icon_end}).addTo(map);
         L.marker(endpoint,{icon: new L.Icon.Default(), draggable:true,title:'You will arrived soon'}).addTo(map).bindPopup('It will alert when you arrived.<br> Let`s Go!!!');
     </script>
+    {% for index in data_delay %}
+        {% if not index.route_color == "#0000FF"%}
+        {% if index.route_color == "#FFFF00"%}
+        <script>
+            L.polyline({{index.block}},
+                {
+                    color: '{{index.route_color}}',
+                    weight:6,
+                    opacity:1
+                }).addTo(map)
+        </script>
+        {%else%}
+        <script>
+            L.polyline({{index.block}},
+                {
+                    color: '{{index.route_color}}',
+                    weight:6,
+                }).addTo(map)
+        </script>
+        {%endif%}
+        {%endif%}
+    {% endfor %}
 {% endblock core_body%}

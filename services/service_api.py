@@ -8,9 +8,7 @@ from models.models import Variable
 def get_route_osrm_grab(data):
     models_var = Variable()
     condition = models_var.CONDITION
-    print("This: ", condition)
     for name in condition:
-        print("My name: ", name)
         if name == "end_point":
             if not data.get(name):
                 return JSONResponse(content=models_var.ROUTE429)
@@ -22,14 +20,12 @@ def get_route_osrm_grab(data):
     do.condition(scan=condition['scan'])  # true, false(default)
     do.condition(weather=condition['weather'])  # true, false(default)
     response = do.serve()
-    print("RES: ", response)
     
     return JSONResponse(response)
 
 def get_route_waze(data):
     models_var = Variable()
     condition = models_var.CONDITION
-    print("This: ", condition)
     for name in condition:
         if name == "end_point":
             if not data.get(name):
@@ -48,10 +44,7 @@ def get_route_waze(data):
 def get_route_osrm_grab2(data):
     models_var = Variable()
     condition = models_var.CONDITION
-    print("My Con: ", condition)
-    # data = {'start_point': {'lat': 11.584637323468067, 'lng': 104.90419534099364}, 'endint': {'lat': 11.531581, 'lng': 104.827453}, 'scan': True, 'traffic': True}
     for name in condition:
-        print("My name: ", name)
         if name == "end_point":
             if not data.get(name):
                 return JSONResponse(content=models_var.ROUTE429)
@@ -71,7 +64,6 @@ def get_route_multiple_points_osrm_grab(data):
     models_var = Variable()
     condition = models_var.CONDITION
     for name in condition:
-        print("My name: ", name)
         if name == "end_point":
             if not data.get(name):
                 return JSONResponse(content=models_var.ROUTE429)
