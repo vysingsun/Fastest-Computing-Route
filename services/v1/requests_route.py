@@ -4,6 +4,7 @@ from .insert_driver import InsertDriver
 from models.models import Variable
 import threading
 import requests
+import random
 
 URLOSRM = "https://routing.openstreetmap.de/routed-car/route/v1/driving/{lng_start_point},{lat_start_point};{lng_end_point},{lat_end_point}?overview=full&geometries=geojson&steps=true&generate_hints=false"
 
@@ -40,8 +41,6 @@ class RequestRoute:
         self.models.setEndLatLng(e_lat, e_lng)
 
     def serve(self):
-        print("IN Serve",self.conditions)
-        print("MY points",self.conditions["points"])
         for name in self.conditions:
             if name == "route":
                 print(self.conditions[name])
@@ -87,10 +86,14 @@ class RequestRoute:
            
             self.options_osrm()
         elif types == "graph":
-            key = settings.KEY_GRAPH
+            print("My Graph", types)
+            # key = settings.KEY_GRAPH
+            # "0dc4f299-a491-452f-97e0-515c296c9453" "a3d9f382-aa47-49b2-bcc2-fda39e4c1dcc", 
+            key = ["LijBPDQGfu7Iiq80w3HzwB4RUDJbMbhs6BU0dEnn", "a948c182-388d-48eb-889f-01131bbce681", "8fcdb3be-5de1-46db-b97f-a76370ca35b8"]
             rand_key = random.choice(key)
+            print("my Key", rand_key)
             graph_bike = requests.get(
-                'https://graphhopper.com/api/1//route?point={}%2C{}&point={}%2C{}&type=json&locale=en-US&vehicle=car&weighting=fastest&elevation=true&key={}&points_encoded=false'.format(
+                'https://graphhopper.com/api/1/route?point={}%2C{}&point={}%2C{}&type=json&locale=en-US&vehicle=car&weighting=fastest&elevation=true&key={}&points_encoded=false'.format(
                     self.conditions["start_point"]["lat"], self.conditions["start_point"]["lng"], self.conditions["end_point"]["lat"], self.conditions["end_point"]["lng"], rand_key)).json()
             duration = graph_bike['paths'][0]['time']
             self.json_data = graph_bike

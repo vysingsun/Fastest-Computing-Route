@@ -2,7 +2,7 @@ from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
 from models.models import Variable
 from services.v1.requests_route import RequestRoute
-from services.service_api import get_route_osrm_grab, get_route_waze, get_route_multiple_points_osrm_grab
+from services.service_api import get_route_osrm_grab, get_route_waze, get_route_multiple_points_osrm_grab, get_route_waze_for_multiple_point
 from fastapi.templating import Jinja2Templates
 import httpx
 import requests
@@ -111,16 +111,24 @@ async def index(request: Request):
 @routeMap.get('/open_street_map')
 async def index(request: Request):
     data = {
+        # "start_point": {
+        #     "lat": 11.584637323468067,
+        #     "lng": 104.90419534099364
+        # },
+        # "end_point": {
+        #     "lat": 11.598114,
+        #     "lng": 104.875190
+        # },
         "start_point": {
-            "lat": 11.584637323468067,
-            "lng": 104.90419534099364
+            "lat": 11.570225,
+            "lng": 104.899414
         },
         "end_point": {
-            "lat": 11.598114,
-            "lng": 104.875190
+            "lat": 11.581087,
+            "lng": 104.911915
         },
         "scan": True,
-        "route": "osrm",
+        "route": "graph",
         "traffic": True,
     }
     print("1",data)
@@ -144,7 +152,6 @@ async def index(request: Request):
 async def index(request: Request):
     # 11.570225, 104.899414
     # 11.581087, 104.911915
-
     data = {
         "start_point": {
             "lat": 11.570225,
@@ -178,6 +185,7 @@ async def index(request: Request):
     data = {
         "scan": True,
         "traffic": True,
+        "route": "osrm",
         "points": [
             [11.584637323468067, 104.90419534099364],
             [11.567172, 104.900340],
@@ -191,8 +199,7 @@ async def index(request: Request):
     async with httpx.AsyncClient(timeout=20.0) as client:
         response = await client.post("http://localhost:8000/api/v1/route/multiplepoints", json=data)
         response_data = response.json()
-        
-    print('Traffic',response_data['geometries']['blocks_scan'])
+
     context = {
         'model': "Car",
         # 'distance': response_data['geometries']['distance'] / 1000,
@@ -203,6 +210,76 @@ async def index(request: Request):
     }
     return templates.TemplateResponse(name="osrm.html", request=request, context=context)
 
+@routeMap.get('/multiple/waze')
+async def index(request: Request):
+    data = {
+        "points": [
+            [11.584637323468067, 104.90419534099364],
+            [11.567172, 104.900340],
+            [11.583854, 104.909404]
+        ]
+    }
+    async with httpx.AsyncClient(timeout=20.0) as client:
+        response = await client.post("http://localhost:8000/api/v1/route/multiplepointsv2", json=data)
+        response_data = response.json()
+    context = {
+        'model': "Car",
+        'map': response_data,
+        'points1': data['points']
+    }
+    return templates.TemplateResponse(name="osrm.html", request=request, context=context)
+
+@routeMap.api_route('/map', methods=['GET', 'POST'])
+async def handle_map(request: Request):
+    if request.method == 'POST':
+        data = await request.json()
+        points = data.get("points", [])
+        print("Received points:", points)
+
+        data = {
+            "start_point": {
+                "lat": points[0][0],
+                "lng": points[0][1]
+            },
+            "end_point": {
+                "lat": points[-1][0],
+                "lng": points[-1][1]
+            },
+            "scan": True,
+            "traffic": True,
+            "route": "graph",
+        }
+        
+        print("My data Pickup",data)
+
+        async with httpx.AsyncClient(timeout=20.0) as client:
+            response = await client.post("http://localhost:8000/api/v1/route", json=data)
+            response_data = response.json()
+        content = {
+            'route': response_data['geometries']['route'],
+            'data_delay': response_data['geometries']['blocks_scan']
+        }
+        return JSONResponse(content)
+    else:
+        data = {
+            "start_point": {
+                "lat": 11.570225,
+                "lng": 104.899414
+            },
+            "end_point": {
+                "lat": 11.581087,
+                "lng": 104.911915
+            },
+            "scan": True,
+            "traffic": True,
+        }
+        context = {
+            'lat_s': data['start_point']['lat'],
+            'lng_s': data['start_point']['lng'],
+            'lat_e': data['end_point']['lat'],
+            'lng_e': data['end_point']['lng'],
+        }
+        return templates.TemplateResponse(name="maps.html", request=request, context=context)
 
 @routeMap.post("/api/v1/route")
 async def open_street_map(request: Request):
@@ -219,4 +296,9 @@ async def waze_route(request: Request):
 async def multiple_points(request: Request):
     data = await request.json()
     return get_route_multiple_points_osrm_grab(data)
+
+@routeMap.post("/api/v1/route/multiplepointsv2")
+async def multiple_points_waze(request: Request):
+    data = await request.json()
+    return get_route_waze_for_multiple_point(data)
 

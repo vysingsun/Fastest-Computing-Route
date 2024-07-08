@@ -3,6 +3,7 @@ from fastapi import Response, Request
 from fastapi.responses import JSONResponse # type: ignore
 from .v1.requests_route import RequestRoute
 from .waze_service_data.waze_request_route_service import WazeRequestRoute
+from .waze_service_data.waze_route_service import WazeRoute
 from models.models import Variable
 
 def get_route_osrm_grab(data):
@@ -83,4 +84,28 @@ def get_route_multiple_points_osrm_grab(data):
     do.condition(points=condition['points'])
     
     return JSONResponse(do.serve_of_multiple_points())
+
+def get_route_waze_for_multiple_point(data):
+    models_var = Variable()
+    condition = models_var.CONDITION
+     # Ensure that 'points' is provided and has at least two points
+    if 'points' not in data or len(data['points']) < 2:
+        return JSONResponse(content={"error": "At least two points are required"})
+    
+    start_point = data['points'][0]
+    end_point = data['points'][-1]
+
+    condition['points'] = data['points']
+    for name in condition:
+        if data.get(name) is not None:
+            condition[name] = data.get(name)
+            
+    dov2 = WazeRoute(str(start_point[0]), str(start_point[1]), str(end_point[0]), str(end_point[1]))
+    dov2.condition(route=condition['route'])
+    dov2.condition(scan=condition['scan'])
+    dov2.condition(points=condition['points'])
+
+    response = dov2.serve_of_multiple_points()
+
+    return JSONResponse(content=response)
 

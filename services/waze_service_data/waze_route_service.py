@@ -1,7 +1,12 @@
 import requests
 from config.settings import Settings
 from models.models import Variable
+import threading
 class WazeRoute:
+    
+    routes = []
+    start_route = 0
+
     settings = Settings()
     coordinates = None
     steps = None
@@ -12,6 +17,7 @@ class WazeRoute:
     #setting
     models = Variable()
     conditions = models.CONDITION
+    full_route = models.ROUTE
     VERSION_WAZE = settings.VERSION_WAZE
     def __init__(self,s_lat, s_lng, e_lat, e_lng):
         self.set_request(s_lat, s_lng, e_lat, e_lng)
@@ -69,3 +75,83 @@ class WazeRoute:
 
     def get_duration(self):
         return self.duration
+    
+    def serve_of_multiple_points(self):
+        route = None
+        for name in self.conditions:
+            if name == "route":
+                if self.conditions[name] == "osrm":
+                    route = self.dynamic_route_of_multiple_points("osrm")
+                break
+
+        if route is not None:
+            self.full_route = route
+
+        return self.full_route
+
+    def dynamic_route_of_multiple_points(self, types=None):
+        if types is None or types == "osrm" or types != "graph":
+            # Fixed starting point
+            start_point = self.conditions["points"][0]
+            other_points = self.conditions["points"][1:]
+
+            return self.get_short_dis_and_route(start_point, other_points)
+
+    def get_short_dis_and_route(self, start, points):
+        points = [i for i in points if i != start]
+        short_point = []
+        shortest_distance = float('inf')
+
+        self.conditions["start_point"] = {
+            "lat": start[0],
+            "lng": start[1],
+        }
+
+        # Add threading
+        threads = []
+        results = []
+        results_lock = threading.Lock()
+
+        def worker(data, index):
+            try:
+                s_lat = self.conditions["start_point"]["lat"]
+                s_lng = self.conditions["start_point"]["lng"]
+                e_lat = data[0]
+                e_lng = data[1]
+                hosts = self.models.getWazData(s_lat, s_lng, e_lat, e_lng)
+                if hosts != {"error": "Internal Error"}:
+                    distance = hosts['response']['totalRouteTime']
+                    coords = [[latlng['y'], latlng['x']] for latlng in hosts['coords']]
+                    with results_lock:
+                        results.append((distance, data, index, coords))
+            except Exception as e:
+                print(f"Error in worker thread: {e}")
+
+        
+        for i, data in enumerate(points):
+            thread = threading.Thread(target=worker, args=(data, i))
+            threads.append(thread)
+            thread.start()
+
+        for thread in threads:
+            thread.join()
+
+        # Sort results by distance
+        results.sort(key=lambda x: x[0])
+
+        for distance, data, index, coords in results:
+            if distance < shortest_distance:
+                shortest_distance = distance
+                short_point = data
+
+                self.conditions["start_point"] = {
+                    "lat": data[0],
+                    "lng": data[1],
+                }
+                if self.routes != self.coordinates:
+                    self.routes = self.routes + coords
+
+        if len(points) > 0:
+            self.get_short_dis_and_route(short_point, points)
+
+        return self.routes

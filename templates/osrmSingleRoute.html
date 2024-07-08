@@ -2,7 +2,7 @@
 {% block core_body%}
     <div class="folium-map" id="map" style="position:absolute;width: 100%;height: 100%;left: 0px"></div>
     <script>
-
+        var points = [];
         var startpoint = {
             lat:{{lat_s}},
             lng:{{lng_s}}
@@ -47,6 +47,17 @@
         });
         L.marker(startpoint,{icon:icon_end}).addTo(map);
         L.marker(endpoint,{icon: new L.Icon.Default(), draggable:true,title:'You will arrived soon'}).addTo(map).bindPopup('It will alert when you arrived.<br> Let`s Go!!!');
+        function onMapClick(e) {
+            var latlng = e.latlng;
+            points.push([latlng.lat, latlng.lng]);
+            console.log(points);  // Display the points array in the console
+
+            // Add a marker at the clicked location
+            L.marker(latlng).addTo(map).bindPopup("Point added at (" + latlng.lat + ", " + latlng.lng + ")").openPopup();
+        }
+
+        // Add click event listener to the map
+        map.on('click', onMapClick);
     </script>
     {% for index in data_delay %}
         {% if not index.route_color == "#0000FF"%}
