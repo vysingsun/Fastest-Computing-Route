@@ -33,7 +33,7 @@ async def index(request: Request):
     for i in range(len(response_data['geometries']['route'])):
         gcoor.append('{lat:'+str(response_data['geometries']['route'][i][0])+',lng:'+str(response_data['geometries']['route'][i][1])+'}')
     gcoor=','.join(gcoor)
-    
+    print("Res", gcoor)
     #mapping Data for block traffic
     bcoor = []
     for block_scan in response_data['geometries']['blocks_scan']:
@@ -111,14 +111,6 @@ async def index(request: Request):
 @routeMap.get('/open_street_map')
 async def index(request: Request):
     data = {
-        # "start_point": {
-        #     "lat": 11.584637323468067,
-        #     "lng": 104.90419534099364
-        # },
-        # "end_point": {
-        #     "lat": 11.598114,
-        #     "lng": 104.875190
-        # },
         "start_point": {
             "lat": 11.570225,
             "lng": 104.899414
@@ -148,37 +140,56 @@ async def index(request: Request):
     }
     return templates.TemplateResponse(name="osrmSingleRoute.html", request=request, context=context)
 
-@routeMap.get('/')
+@routeMap.api_route('/map/waze', methods=['GET', 'POST'])
 async def index(request: Request):
-    # 11.570225, 104.899414
-    # 11.581087, 104.911915
-    data = {
-        "start_point": {
-            "lat": 11.570225,
-            "lng": 104.899414
-        },
-        "end_point": {
-            "lat": 11.581087,
-            "lng": 104.911915
-        },
-        "scan": True,
-        "traffic": True,
-    }
-    async with httpx.AsyncClient(timeout=15.0) as client:
-        response = await client.post("http://localhost:8000/api/v2/route/waze", json=data)
-        response_data = response.json()
-    context = {
-        'model': "Car",
-        'distance': response_data['geometries']['distance'] / 1000,
-        # 'duration': strftime("%Hh:%Mm:%Ss", gmtime(response_data['geometries']['duration'])),
-        'map': response_data['geometries']['route'],
-        'lat_s': data['start_point']['lat'],
-        'lng_s': data['start_point']['lng'],
-        'lat_e': data['end_point']['lat'],
-        'lng_e': data['end_point']['lng'],
-        'data_delay': response_data['geometries']['blocks_scan'],
-    }
-    return templates.TemplateResponse(name="osrmSingleRoute.html", request=request, context=context)
+    if request.method == 'POST':
+        data = await request.json()
+        points = data.get("points", [])
+        print("Received points:", points)
+
+        data = {
+            "start_point": {
+                "lat": points[0][0],
+                "lng": points[0][1]
+            },
+            "end_point": {
+                "lat": points[-1][0],
+                "lng": points[-1][1]
+            },
+            "scan": True,
+            "traffic": True,
+        }
+        
+        print("My data Pickup",data)
+
+        async with httpx.AsyncClient(timeout=20.0) as client:
+            response = await client.post("http://localhost:8000/api/v2/route/waze", json=data)
+            response_data = response.json()
+        content = {
+            'route': response_data['geometries']['route'],
+            'data_delay': response_data['geometries']['blocks_scan']
+        }
+        return JSONResponse(content)
+    else:
+        data = {
+            "start_point": {
+                "lat": 11.570225,
+                "lng": 104.899414
+            },
+            "end_point": {
+                "lat": 11.581087,
+                "lng": 104.911915
+            },
+            "scan": True,
+            "traffic": True,
+        }
+        context = {
+            'lat_s': data['start_point']['lat'],
+            'lng_s': data['start_point']['lng'],
+            'lat_e': data['end_point']['lat'],
+            'lng_e': data['end_point']['lng'],
+        }
+        return templates.TemplateResponse(name="osrmFromWaze.html", request=request, context=context)
 
 @routeMap.get('/multiple')
 async def index(request: Request):
@@ -326,6 +337,130 @@ async def handle_map(request: Request):
             'lng_e': data['end_point']['lng'],
         }
         return templates.TemplateResponse(name="osrmPickUp.html", request=request, context=context)
+
+@routeMap.api_route('/map/google', methods=['GET', 'POST'])
+async def index(request: Request):
+    if request.method == 'POST':
+        data = await request.json()
+        points = data.get("points", [])
+        print("Received points:", points)
+
+        data = {
+            "start_point": {
+                "lat": points[0]['lat'],
+                "lng": points[0]['lng']
+            },
+            "end_point": {
+                "lat": points[-1]['lat'],
+                "lng": points[-1]['lng']
+            },
+            "scan": True,
+            "traffic": True,
+        }
+        
+        print("My data Pickup",data)
+
+        async with httpx.AsyncClient(timeout=20.0) as client:
+            response = await client.post("http://localhost:8000/api/v1/route", json=data)
+            response_data = response.json()
+        gcoor = []
+        for i in range(len(response_data['geometries']['route'])):
+            gcoor.append('{lat:'+str(response_data['geometries']['route'][i][0])+',lng:'+str(response_data['geometries']['route'][i][1])+'}')
+        gcoor=','.join(gcoor)
+        print("Res", gcoor)
+        #mapping Data for block traffic
+        bcoor = []
+        for block_scan in response_data['geometries']['blocks_scan']:
+            for coordinate in block_scan['block']:
+                bcoor.append(f'{{lat:{coordinate[0]},lng:{coordinate[1]}}}')
+        bcoor = ','.join(bcoor)
+
+        content = {
+            # 'duration': strftime("%Hh:%Mm:%Ss", gmtime(response_data['geometries']['duration'])),
+            'route': gcoor,
+            'lat_s': data['start_point']['lat'],
+            'lng_s': data['start_point']['lng'],
+            'lat_e': data['end_point']['lat'],
+            'lng_e': data['end_point']['lng'],
+            'data_delay': bcoor,
+        }
+        return JSONResponse(content)
+    else:
+        data = {
+            "start_point": {
+                "lat": 11.570225,
+                "lng": 104.899414
+            },
+            "end_point": {
+                "lat": 11.581087,
+                "lng": 104.911915
+            },
+            "scan": True,
+            "traffic": True,
+        }
+        context = {
+            'lat_s': data['start_point']['lat'],
+            'lng_s': data['start_point']['lng'],
+            'lat_e': data['end_point']['lat'],
+            'lng_e': data['end_point']['lng'],
+        }
+        return templates.TemplateResponse(name="googleMapPickUp.html", request=request, context=context)
+    
+@routeMap.api_route('/multi/google', methods=['GET', 'POST'])
+async def index(request: Request):
+    if request.method == 'POST':
+        data = await request.json()
+        points = data.get("points", [])
+        print("Received points:", points)
+
+        transformed_list = [[item['lat'], item['lng']] for item in points]
+        
+        print("My data Pickup",transformed_list)
+        
+        data = {
+            "points": transformed_list
+        }
+
+        async with httpx.AsyncClient(timeout=20.0) as client:
+            response = await client.post("http://localhost:8000/api/v1/route/multiplepoints", json=data)
+            response_data = response.json()
+        gcoor = []
+        for i in range(len(response_data['geometries']['route'])):
+            gcoor.append('{lat:'+str(response_data['geometries']['route'][i][0])+',lng:'+str(response_data['geometries']['route'][i][1])+'}')
+        gcoor=','.join(gcoor)
+        print("Res", gcoor)
+        #mapping Data for block traffic
+        bcoor = []
+        for block_scan in response_data['geometries']['blocks_scan']:
+            for coordinate in block_scan['block']:
+                bcoor.append(f'{{lat:{coordinate[0]},lng:{coordinate[1]}}}')
+        bcoor = ','.join(bcoor)
+
+        content = {
+            'route': gcoor,
+            'data_delay': bcoor,
+        }
+        return JSONResponse(content)
+    else:
+        data = {
+            "start_point": {
+                "lat": 11.570225,
+                "lng": 104.899414
+            },
+            "end_point": {
+                "lat": 11.581087,
+                "lng": 104.911915
+            },
+            "scan": True,
+            "traffic": True,
+        }
+        context = {
+            'lat_s': data['start_point']['lat'],
+            'lng_s': data['start_point']['lng'],
+            'lat_e': data['end_point']['lat'],
+            'lng_e': data['end_point']['lng'],
+        }
+        return templates.TemplateResponse(name="googleMapMultiPickUp.html", request=request, context=context)
 
 @routeMap.post("/api/v1/route")
 async def open_street_map(request: Request):

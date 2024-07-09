@@ -1,0 +1,127 @@
+{% extends 'core.html' %}
+{% block core_body %}
+    <div id="overlay"></div>
+    <div id="loading" class="divLoading">
+        <div class="spinner"></div>
+    </div>
+    <div id="map" style="position:absolute;width: 100%;height: 100%;left: 0px;z-index: 1"></div>
+    <button class="btn" style="position:absolute;right: 0px;bottom: 0px;z-index: 10" onclick="sendDataToBackend()">
+        <img style="width: 50%;height: 50%; display: flex; padding-left: 9px;" src="../static/dist/images/right-arrow.png" alt="">
+    </button>
+    <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDD9JHRxaxmPhScfgIF4h89KRshJAF315E&callback=initMap"></script>
+    <script>
+        var map;
+        var markers = [];
+        var points = [];
+
+        function initMap() {
+            var startpoint = {
+                lat: {{ lat_s }},
+                lng: {{ lng_s }}
+            };
+            var endpoint = {
+                lat: {{ lat_e }},
+                lng: {{ lng_e }}
+            };
+            var center = {
+                lat: (startpoint.lat + endpoint.lat) / 2,
+                lng: (startpoint.lng + endpoint.lng) / 2
+            };
+
+            map = new google.maps.Map(document.getElementById('map'), {
+                zoom: 14,
+                center: center,
+                mapTypeId: 'terrain',
+            });
+
+            var flightPlanCoordinates = [{{ map }}];
+            drawPolyline(flightPlanCoordinates, '#0066ff');
+
+            google.maps.event.addListener(map, 'click', function(event) {
+                addMarker(event.latLng, 'Point added', false, true);
+                points.push({ lat: event.latLng.lat(), lng: event.latLng.lng() });
+                console.log(points);
+            });
+        }
+
+        function addMarker(location, title, draggable = false, removable = false) {
+            var marker = new google.maps.Marker({
+                position: location,
+                map: map,
+                draggable: draggable,
+                animation: google.maps.Animation.DROP,
+                title: title
+            });
+            markers.push(marker);
+
+            if (removable) {
+                google.maps.event.addListener(marker, 'click', function() {
+                    marker.setMap(null);
+                    markers = markers.filter(m => m !== marker);
+                    points = points.filter(p => p.lat !== location.lat || p.lng !== location.lng);
+                    console.log(points);
+                });
+            }
+        }
+
+        function drawPolyline(coordinates, color) {
+            var flightPath = new google.maps.Polyline({
+                path: coordinates,
+                geodesic: true,
+                strokeColor: color,
+                strokeOpacity: 1.0,
+                strokeWeight: 3.5
+            });
+            flightPath.setMap(map);
+        }
+
+        function sendDataToBackend() {
+            document.getElementById('overlay').style.display = 'block';
+            document.getElementById('loading').style.display = 'block';
+            fetch('/map/google', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ points: points })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok ' + response.statusText);
+                }
+                return response.json(); // Parse JSON response
+            })
+            .then(data => {
+                console.log('Success:', data.route);
+                updateMap(data.route, data.data_delay); // Update the map with the new route
+            })
+            .catch((error) => {
+                console.error('Error:', error);
+            })
+            .finally(() => {
+                // Hide loading indicator and overlay
+                document.getElementById('overlay').style.display = 'none';
+                document.getElementById('loading').style.display = 'none';
+            });
+        }
+
+        function updateMap(route, data_delay) {
+            try {
+                const my_route = eval('[' + route + ']')
+                drawPolyline(my_route, '#0000FF');
+                data_delay = eval('[' + data_delay + ']')
+                console.log(data_delay);
+                var delayPath = new google.maps.Polyline({
+                    path: data_delay,
+                    geodesic: true,
+                    strokeColor: '#FFFF00',
+                    strokeOpacity: 1.0,
+                    strokeWeight: 3.5
+                });
+                delayPath.setMap(map);
+            } catch (error) {
+                console.log(error);
+            }
+        }
+    </script>
+{% endblock core_body %}
