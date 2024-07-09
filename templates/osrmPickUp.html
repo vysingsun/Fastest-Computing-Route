@@ -1,0 +1,111 @@
+{% extends 'core.html' %}
+{% block core_body %}
+    <div id="overlay"></div>
+    <div id="loading" class="divLoading">
+        <div class="spinner"></div>
+    </div>
+    <div class="folium-map" id="map" style="position:absolute;width: 100%;height: 100%;left: 0px;z-index: 1"></div>
+    <button class="btn" style="position:absolute;right: 0px;bottom: 0px;z-index: 10" onclick="sendDataToBackend()"><img style="width: 50%;height: 50%; display: flex; padding-left: 9px;" src="../static/dist/images/right-arrow.png" alt=""></button>
+    <script>
+        var points = [];
+        var startpoint = {
+            lat: {{lat_s}},
+            lng: {{lng_s}}
+        };
+        var endpoint = {
+            lat: {{lat_e}},
+            lng: {{lng_e}}
+        };
+        var center = {
+            lat: (startpoint.lat + endpoint.lat) / 2,
+            lng: (startpoint.lng + endpoint.lng) / 2
+        };
+        var map = L.map("map", {
+            center: startpoint,
+            crs: L.CRS.EPSG3857,
+            zoom: 14,
+            zoomControl: true,
+            preferCanvas: false,
+        });
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: "Data by &copy; <a href=\"http://openstreetmap.org\">OpenStreetMap</a>, under <a href=\"http://www.openstreetmap.org/copyright\">ODbL</a>.",
+            detectRetina: false,
+            maxNativeZoom: 18,
+            maxZoom: 25,
+            minZoom: 0,
+            noWrap: false,
+            opacity: 1,
+            subdomains: "abc",
+            tms: false
+        }).addTo(map);
+
+        L.polyline([{{ map }}], { color: '#0000FF', weight: 6, opacity: 2 }).addTo(map);
+
+        function onMapClick(e) {
+            var latlng = e.latlng;
+            points.push([latlng.lat, latlng.lng]);
+            console.log(points);
+
+            var marker = L.marker(latlng).addTo(map).bindPopup("Point added at (" + latlng.lat + ", " + latlng.lng + ")").openPopup();
+
+            marker.on('click', function () {
+                map.removeLayer(marker);
+                points = points.filter(point => point[0] !== latlng.lat || point[1] !== latlng.lng);
+                console.log(points);
+            });
+        }
+
+        map.on('click', onMapClick);
+
+        function sendDataToBackend() {
+            document.getElementById('overlay').style.display = 'block';
+            document.getElementById('loading').style.display = 'block';
+            fetch('/multi', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ points: points })
+            })
+            .then(response => {
+                console.log(response);
+                if (!response.ok) {
+                    throw new Error('Network response was not ok ' + response.statusText);
+                }
+                return response.json(); // Parse JSON response
+            })
+            .then(data => {
+                console.log('Success:', data);
+                updateMap(data.route, data.data_delay, data.points1); // Update the map with the new route
+            })
+            .catch((error) => {
+                console.error('Error:', error);
+            })
+            .finally(() => {
+                // Hide loading indicator and overlay
+                document.getElementById('overlay').style.display = 'none';
+                document.getElementById('loading').style.display = 'none';
+            });
+        }
+
+        function updateMap(route, data_delay, points) {
+            L.polyline(route, { color: '#0000FF', weight: 6, opacity: 2 }).addTo(map);
+            data_delay.forEach(index => {
+                if (index.route_color !== "#0000FF") {
+                    let polylineOptions = {
+                        color: index.route_color,
+                        weight: 6,
+                    };
+                    if (index.route_color === "#FFFF00") {
+                        polylineOptions.opacity = 1;
+                    }
+                    L.polyline(index.block, polylineOptions).addTo(map);
+                }
+            });
+            points.forEach(function(point) {
+                L.marker([point[0], point[1]], { icon: my_icon }).addTo(map);
+            });
+        }
+    </script>
+{% endblock core_body %}

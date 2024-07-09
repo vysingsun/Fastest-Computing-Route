@@ -281,6 +281,52 @@ async def handle_map(request: Request):
         }
         return templates.TemplateResponse(name="maps.html", request=request, context=context)
 
+@routeMap.api_route('/multi', methods=['GET', 'POST'])
+async def handle_map(request: Request):
+    if request.method == 'POST':
+        data = await request.json()
+        points = data.get("points", [])
+        print("Received points:", points)
+
+        data = {
+            "points": points,
+            "scan": True,
+            "traffic": True,
+            "route": "osrm",
+        }
+        
+        print("My data Pickup",data)
+
+        async with httpx.AsyncClient(timeout=1.0) as client:
+            response = await client.post("http://localhost:8000/api/v1/route/multiplepoints", json=data)
+            response_data = response.json()
+        content = {
+            'points1': data['points'],
+            'route': response_data['geometries']['route'],
+            'data_delay': response_data['geometries']['blocks_scan']
+        }
+        return JSONResponse(content)
+    else:
+        data = {
+            "start_point": {
+                "lat": 11.570225,
+                "lng": 104.899414
+            },
+            "end_point": {
+                "lat": 11.581087,
+                "lng": 104.911915
+            },
+            "scan": True,
+            "traffic": True,
+        }
+        context = {
+            'lat_s': data['start_point']['lat'],
+            'lng_s': data['start_point']['lng'],
+            'lat_e': data['end_point']['lat'],
+            'lng_e': data['end_point']['lng'],
+        }
+        return templates.TemplateResponse(name="osrmPickUp.html", request=request, context=context)
+
 @routeMap.post("/api/v1/route")
 async def open_street_map(request: Request):
     data = await request.json()
